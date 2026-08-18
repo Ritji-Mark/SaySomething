@@ -14,7 +14,27 @@ const notificationRoutes = require("./routes/notifications");
 const categoryRoutes = require("./routes/categories");
 
 const app = express();
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173" }));
+
+// CORS: in production, lock to CLIENT_ORIGIN. In development, accept any
+// localhost / 127.0.0.1 origin so the exact Vite port (5173, 5174, …) doesn't
+// matter — Vite drifts to the next free port when 5173 is taken.
+const isProd = process.env.NODE_ENV === "production";
+const allowedOrigin = process.env.CLIENT_ORIGIN;
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Non-browser clients (curl, health checks) send no Origin header.
+      if (!origin) return callback(null, true);
+      // Explicit allow-list via env (e.g. the production domain).
+      if (allowedOrigin && origin === allowedOrigin) return callback(null, true);
+      // Any localhost / 127.0.0.1 origin during development.
+      if (!isProd && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+  })
+);
 app.use(express.json());
 
 // Serve uploaded evidence files
