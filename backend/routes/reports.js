@@ -362,4 +362,134 @@ router.patch(
     }
 );
 
+// ASSIGN a report to an authority (+ optional department) — Administrator only
+router.patch(
+    "/:id/assign",
+    authenticateToken,
+    authorizeRoles("Administrator"),
+    async (req, res) => {
+        const client = await pool.connect();
+
+        try {
+            const { id } = req.params;
+            const { authority_id, department_id, note } = req.body;
+
+            if (!authority_id) {
+                return res.status(400).json({
+                    success: false,
+                    message: "authority_id is required"
+                });
+            }
+
+            await client.query("BEGIN");
+
+            // Report must exist (grab reporter for notification)
+            const reportResult = await client.query(
+                "SELECT id, user_id, report_number FROM reports WHERE id = $1",
+                [id]
+            );
+            if (reportResult.rows.length === 0) {
+                await client.query("ROLLBACK");
+                return res.status(404).json({ success: false, message: "Report not found" });
+            }
+            const report = reportResult.rows[0];
+
+            // Authority must exist
+            const authorityResult = await client.query(
+                "SELECT id, name FROM authorities WHERE id = $1",
+                [authority_id]
+            );
+            if (authorityResult.rows.length === 0) {
+                await client.query("ROLLBACK");
+                return res.status(404).json({ success: false, message: "Authority not found" });
+            }
+            const authorityName = authorityResult.rows[0].name;
+
+            // If a department is given, it must exist AND belong to the authority
+            if (department_id !== undefined && department_id !== null) {
+                const deptResult = await client.query(
+                    "SELECT id, authority_id FROM departments WHERE id = $1",
+                    [department_id]
+                );
+                if (deptResult.rows.length === 0) {
+                    await client.query("ROLLBACK");
+                    return res.status(404).json({ success: false, message: "Department not found" });
+                }
+                if (Number(deptResult.rows[0].authority_id) !== Number(authority_id)) {
+                    await client.query("ROLLBACK");
+                    return res.status(400).json({
+                        success: false,
+                        message: "Department does not belong to the specified authority"
+                    });
+                }
+            }
+
+            // Move the report to "Assigned"
+            const statusResult = await client.query(
+                "SELECT id FROM report_status WHERE name = 'Assigned'"
+            );
+            if (statusResult.rows.length === 0) {
+                await client.query("ROLLBACK");
+                return res.status(500).json({
+                    success: false,
+                    message: "Assigned report status is not configured"
+                });
+            }
+            const assignedStatusId = statusResult.rows[0].id;
+
+            const updatedReport = await client.query(
+                `
+                UPDATE reports
+                SET
+                    authority_id = $1,
+                    department_id = $2,
+                    status_id = $3,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = $4
+                RETURNING id, report_number, title, status_id, authority_id, department_id, updated_at
+                `,
+                [authority_id, department_id || null, assignedStatusId, id]
+            );
+
+            // Record status history
+            await client.query(
+                `
+                INSERT INTO status_history (report_id, status_id, changed_by, note)
+                VALUES ($1, $2, $3, $4)
+                `,
+                [id, assignedStatusId, req.user.user_id, note || `Assigned to ${authorityName}`]
+            );
+
+            // Notify the reporter
+            await client.query(
+                `
+                INSERT INTO notifications (user_id, report_id, title, message)
+                VALUES ($1, $2, $3, $4)
+                `,
+                [
+                    report.user_id,
+                    id,
+                    "Report assigned",
+                    `Your report ${report.report_number} has been assigned to ${authorityName}.`
+                ]
+            );
+
+            await client.query("COMMIT");
+
+            res.json({
+                success: true,
+                message: "Report assigned successfully",
+                report: updatedReport.rows[0]
+            });
+
+        } catch (error) {
+            await client.query("ROLLBACK");
+            console.error("Error assigning report:", error);
+            res.status(500).json({ success: false, message: "Failed to assign report" });
+        } finally {
+            client.release();
+        }
+    }
+);
+
 module.exports = router;
