@@ -3,6 +3,7 @@ const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const express = require("express");
+const cors = require("cors");
 const pool = require("./config/database");
 
 const authRoutes = require("./routes/auth");
@@ -13,6 +14,7 @@ const notificationRoutes = require("./routes/notifications");
 const categoryRoutes = require("./routes/categories");
 
 const app = express();
+app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173" }));
 app.use(express.json());
 
 // Serve uploaded evidence files

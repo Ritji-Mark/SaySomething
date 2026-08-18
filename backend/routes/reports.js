@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const pool = require("../config/database");
 const authenticateToken = require("../middleware/auth");
 const authorizeRoles = require("../middleware/roles");
+const { getAccessibleReport } = require("../utils/reportAccess");
 
 const router = express.Router();
 
@@ -491,5 +492,52 @@ router.patch(
         }
     }
 );
+
+// GET status history (timeline) for a report — access-checked
+router.get("/:id/history", authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const { report, allowed } = await getAccessibleReport(req.user, id);
+        if (!report) {
+            return res.status(404).json({ success: false, message: "Report not found" });
+        }
+        if (!allowed) {
+            return res.status(403).json({
+                success: false,
+                message: "You do not have permission to view this report"
+            });
+        }
+
+        const result = await pool.query(
+            `
+            SELECT
+                sh.id,
+                sh.status_id,
+                rs.name AS status,
+                sh.note,
+                sh.changed_by,
+                u.full_name AS changed_by_name,
+                sh.created_at
+            FROM status_history sh
+            LEFT JOIN report_status rs ON rs.id = sh.status_id
+            LEFT JOIN users u ON u.id = sh.changed_by
+            WHERE sh.report_id = $1
+            ORDER BY sh.created_at ASC
+            `,
+            [id]
+        );
+
+        res.json({
+            success: true,
+            count: result.rows.length,
+            history: result.rows
+        });
+
+    } catch (error) {
+        console.error("Error fetching report history:", error);
+        res.status(500).json({ success: false, message: "Failed to fetch report history" });
+    }
+});
 
 module.exports = router;
