@@ -10,6 +10,7 @@ const reportRoutes = require("./routes/reports");
 const commentRoutes = require("./routes/comments");
 const evidenceRoutes = require("./routes/evidence");
 const notificationRoutes = require("./routes/notifications");
+const categoryRoutes = require("./routes/categories");
 
 const app = express();
 app.use(express.json());
@@ -24,6 +25,7 @@ app.use("/api/reports/:reportId/evidence", evidenceRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/categories", categoryRoutes);
 
 app.get("/", (req, res) => {
     res.json({
