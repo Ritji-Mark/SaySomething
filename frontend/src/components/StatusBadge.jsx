@@ -1,14 +1,15 @@
+// Status pills tuned for the deep-forest (dark) UI: translucent color fills
+// with light text so they read clearly on the green background.
 const STATUS_STYLES = {
-  Submitted: "bg-slate-100 text-slate-700 ring-slate-200",
-  "Under Review": "bg-amber-100 text-amber-800 ring-amber-200",
-  Assigned: "bg-indigo-100 text-indigo-800 ring-indigo-200",
-  "In Progress": "bg-blue-100 text-blue-800 ring-blue-200",
-  Resolved: "bg-green-100 text-green-800 ring-green-200",
+  Submitted: "bg-white/10 text-white/80 ring-white/20",
+  "Under Review": "bg-amber-400/15 text-amber-200 ring-amber-300/30",
+  Assigned: "bg-sky-400/15 text-sky-200 ring-sky-300/30",
+  "In Progress": "bg-blue-400/15 text-blue-200 ring-blue-300/30",
+  Resolved: "bg-emerald-400/20 text-emerald-200 ring-emerald-300/40",
 };
 
 export default function StatusBadge({ status }) {
-  const style =
-    STATUS_STYLES[status] || "bg-slate-100 text-slate-700 ring-slate-200";
+  const style = STATUS_STYLES[status] || "bg-white/10 text-white/80 ring-white/20";
 
   return (
     <span

@@ -33,33 +33,33 @@ export default function ReportsList() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">My Reports</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-white">My Reports</h1>
+          <p className="text-sm text-mint">
             Issues you have reported and their current status.
           </p>
         </div>
         <Link
           to="/reports/new"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded-md bg-mint px-4 py-2 text-sm font-semibold text-forest transition hover:bg-white"
         >
           + New Report
         </Link>
       </div>
 
-      {loading && <p className="text-slate-500">Loading…</p>}
+      {loading && <p className="text-mint">Loading…</p>}
 
       {error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-md bg-red-500/15 px-4 py-3 text-sm text-red-200 ring-1 ring-red-400/20">
           {error}
         </div>
       )}
 
       {!loading && !error && reports.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
-          <p className="text-slate-600">You haven&apos;t reported anything yet.</p>
+        <div className="rounded-xl border border-dashed border-forest-line p-10 text-center">
+          <p className="text-mint">You haven&apos;t reported anything yet.</p>
           <Link
             to="/reports/new"
-            className="mt-3 inline-block rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="mt-3 inline-block rounded-md bg-mint px-4 py-2 text-sm font-semibold text-forest transition hover:bg-white"
           >
             Report your first issue
           </Link>
@@ -72,20 +72,20 @@ export default function ReportsList() {
             <Link
               key={r.id}
               to={`/reports/${r.id}`}
-              className="block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+              className="block rounded-xl border border-forest-line bg-forest-surface p-5 transition hover:border-mint/50 hover:bg-forest-raised"
             >
               <div className="mb-2 flex items-start justify-between gap-3">
-                <span className="text-xs font-mono text-slate-400">
+                <span className="font-mono text-xs text-mint">
                   {r.report_number}
                 </span>
                 <StatusBadge status={r.status} />
               </div>
-              <h2 className="mb-1 font-semibold text-slate-900">{r.title}</h2>
-              <p className="mb-3 line-clamp-2 text-sm text-slate-600">
+              <h2 className="mb-1 font-semibold text-white">{r.title}</h2>
+              <p className="mb-3 line-clamp-2 text-sm text-mint">
                 {r.description}
               </p>
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="rounded bg-slate-100 px-2 py-0.5">
+              <div className="flex items-center justify-between text-xs text-mint">
+                <span className="rounded bg-white/10 px-2 py-0.5">
                   {r.category || "Uncategorized"}
                 </span>
                 <span>{formatDate(r.created_at)}</span>

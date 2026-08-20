@@ -24,6 +24,22 @@ export async function getReportHistory(id) {
   return res.data;
 }
 
+// PATCH /api/reports/:id/status -> { success, message, report }  (Authority/Admin)
+export async function updateReportStatus(id, { status_id, note }) {
+  const res = await client.patch(`/reports/${id}/status`, { status_id, note });
+  return res.data;
+}
+
+// PATCH /api/reports/:id/assign -> { success, message, report }  (Admin only)
+export async function assignReport(id, { authority_id, department_id, note }) {
+  const res = await client.patch(`/reports/${id}/assign`, {
+    authority_id,
+    department_id,
+    note,
+  });
+  return res.data;
+}
+
 // GET /api/reports/:id/comments -> { success, count, comments }
 export async function listComments(reportId) {
   const res = await client.get(`/reports/${reportId}/comments`);

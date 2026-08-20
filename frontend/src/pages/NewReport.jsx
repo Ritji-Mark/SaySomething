@@ -88,41 +88,41 @@ export default function NewReport() {
       });
       navigate(`/reports/${data.report.id}`);
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to submit the report."
-      );
+      setError(err.response?.data?.message || "Failed to submit the report.");
       setSubmitting(false);
     }
   };
 
+  const inputClass =
+    "w-full rounded-md border border-forest-line bg-forest px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-mint focus:outline-none focus:ring-1 focus:ring-mint";
+  const labelClass = "mb-1 block text-sm font-medium text-mint";
+
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Report an Issue</h1>
-        <Link to="/reports" className="text-sm text-indigo-600 hover:underline">
+        <h1 className="text-2xl font-bold text-white">Report an Issue</h1>
+        <Link to="/reports" className="text-sm text-mint hover:text-white hover:underline">
           ← Back to my reports
         </Link>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-5 rounded-xl bg-white p-6 shadow"
+        className="space-y-5 rounded-xl border border-forest-line bg-forest-surface p-6"
       >
         {error && (
-          <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-md bg-red-500/15 px-3 py-2 text-sm text-red-200 ring-1 ring-red-400/20">
             {error}
           </div>
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Category
-          </label>
+          <label className={labelClass}>Category</label>
           <select
             required
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className={inputClass}
           >
             <option value="">Select a category…</option>
             {categories.map((c) => (
@@ -134,67 +134,61 @@ export default function NewReport() {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Title
-          </label>
+          <label className={labelClass}>Title</label>
           <input
             type="text"
             required
             maxLength={150}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="e.g. Broken streetlight on Main St"
+            className={inputClass}
+            placeholder="Title"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Description
-          </label>
+          <label className={labelClass}>Description</label>
           <textarea
             required
             rows={4}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="Describe the issue in detail…"
+            className={inputClass}
+            placeholder="Description"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Address <span className="text-slate-400">(optional)</span>
+          <label className={labelClass}>
+            Address <span className="text-white/40">(optional)</span>
           </label>
           <input
             type="text"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="Nearest street address or landmark"
+            className={inputClass}
+            placeholder="Address"
           />
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div className="rounded-lg border border-forest-line bg-forest p-4">
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-700">Location</span>
+            <span className="text-sm font-medium text-white">Location</span>
             <button
               type="button"
               onClick={useMyLocation}
               disabled={geoLoading}
-              className="rounded-md bg-indigo-100 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-200 disabled:opacity-60"
+              className="rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/10 disabled:opacity-60"
             >
-              {geoLoading ? "Locating…" : "📍 Use my location"}
+              {geoLoading ? "Locating…" : "Use my location"}
             </button>
           </div>
 
-          {geoError && (
-            <p className="mb-3 text-sm text-red-600">{geoError}</p>
-          )}
+          {geoError && <p className="mb-3 text-sm text-red-300">{geoError}</p>}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">
+              <label className="mb-1 block text-xs font-medium text-mint">
                 Latitude
               </label>
               <input
@@ -203,12 +197,12 @@ export default function NewReport() {
                 required
                 value={latitude}
                 onChange={(e) => setLatitude(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                placeholder="-1.286389"
+                className={inputClass}
+                placeholder="Latitude"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">
+              <label className="mb-1 block text-xs font-medium text-mint">
                 Longitude
               </label>
               <input
@@ -217,8 +211,8 @@ export default function NewReport() {
                 required
                 value={longitude}
                 onChange={(e) => setLongitude(e.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                placeholder="36.817223"
+                className={inputClass}
+                placeholder="Longitude"
               />
             </div>
           </div>
@@ -227,7 +221,7 @@ export default function NewReport() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+          className="w-full rounded-md bg-mint px-4 py-2 text-sm font-semibold text-forest transition hover:bg-white disabled:opacity-60"
         >
           {submitting ? "Submitting…" : "Submit Report"}
         </button>

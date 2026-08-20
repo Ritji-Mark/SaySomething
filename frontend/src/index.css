@@ -1,1 +1,35 @@
 @import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   SaySomething theme — deep forest UI
+   - Background / brand: deep forest (#203D28)
+   - Primary text: white
+   - Secondary text (timestamps, hints, labels): soft mint tint
+   - Typography: Montserrat (loaded from Google Fonts in index.html)
+--------------------------------------------------------------------------- */
+@theme {
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+
+  --color-forest: #203d28; /* page background / brand */
+  --color-forest-surface: #274a33; /* cards, navbar */
+  --color-forest-raised: #2f5a3e; /* raised fills, hovers */
+  --color-forest-line: #3a684b; /* borders, dividers */
+  --color-mint: #a7d7c5; /* soft mint — secondary text */
+  --color-leaf: #4ca777; /* small accents (dots, focus) */
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-forest);
+  color: #ffffff;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

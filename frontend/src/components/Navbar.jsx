@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { listNotifications } from "../api/notifications.js";
+import { ROLES, homePathForRole } from "../utils/roles.js";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -9,7 +10,7 @@ export default function Navbar() {
   const location = useLocation();
   const [unread, setUnread] = useState(0);
 
-  // Refresh the unread count whenever the route changes (cheap and keeps the
+  // Refresh the unread count whenever the route changes (cheap, keeps the
   // badge current after visiting the notifications page).
   useEffect(() => {
     let active = true;
@@ -33,30 +34,48 @@ export default function Navbar() {
   const linkClass = ({ isActive }) =>
     `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
       isActive
-        ? "bg-indigo-800 text-white"
-        : "text-indigo-100 hover:bg-indigo-500 hover:text-white"
+        ? "bg-white/15 text-white"
+        : "text-mint hover:bg-white/10 hover:text-white"
     }`;
 
+  const role = user?.role;
+
+  // Role-aware primary links (Notifications is rendered separately for its badge).
+  const links = [];
+  if (role === ROLES.CITIZEN) {
+    links.push({ to: "/reports", label: "My Reports", end: true });
+    links.push({ to: "/reports/new", label: "New Report" });
+  }
+  if (role === ROLES.AUTHORITY || role === ROLES.ADMINISTRATOR) {
+    links.push({ to: "/dashboard", label: "Dashboard" });
+  }
+  if (role === ROLES.ADMINISTRATOR) {
+    links.push({ to: "/admin/users", label: "Users" });
+  }
+
   return (
-    <nav className="bg-indigo-600 shadow">
+    <nav className="border-b border-forest-line bg-forest-surface">
       <div className="mx-auto max-w-5xl px-4">
         <div className="flex h-16 items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Link to="/reports" className="text-lg font-bold text-white">
-              📣 SaySomething
+            <Link
+              to={homePathForRole(role)}
+              className="flex items-center gap-2 text-lg font-bold text-white"
+            >
+              <img src="/logo.png" alt="" className="h-8 w-8" />
+              SaySomething
             </Link>
             <div className="hidden items-center gap-1 sm:flex">
-              <NavLink to="/reports" end className={linkClass}>
-                My Reports
-              </NavLink>
-              <NavLink to="/reports/new" className={linkClass}>
-                New Report
-              </NavLink>
+              {links.map((l) => (
+                <NavLink key={l.to} to={l.to} end={l.end} className={linkClass}>
+                  {l.label}
+                </NavLink>
+              ))}
               <NavLink to="/notifications" className={linkClass}>
                 <span className="inline-flex items-center gap-1.5">
                   Notifications
                   {unread > 0 && (
-                    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-semibold text-white">
+                    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-mint px-1.5 text-xs font-semibold text-forest">
                       {unread}
                     </span>
                   )}
@@ -66,12 +85,19 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-indigo-100 sm:inline">
-              {user?.full_name}
+            <span className="hidden text-right sm:block">
+              <span className="block text-sm leading-tight text-white">
+                {user?.full_name}
+              </span>
+              {role && (
+                <span className="block text-xs leading-tight text-mint">
+                  {role}
+                </span>
+              )}
             </span>
             <button
               onClick={handleLogout}
-              className="rounded-md bg-indigo-800 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-900"
+              className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white transition hover:bg-white/10"
             >
               Logout
             </button>

@@ -12,6 +12,10 @@ const commentRoutes = require("./routes/comments");
 const evidenceRoutes = require("./routes/evidence");
 const notificationRoutes = require("./routes/notifications");
 const categoryRoutes = require("./routes/categories");
+const authorityRoutes = require("./routes/authorities");
+const departmentRoutes = require("./routes/departments");
+const reportStatusRoutes = require("./routes/reportStatuses");
+const userRoutes = require("./routes/users");
 
 const app = express();
 
@@ -48,6 +52,10 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/authorities", authorityRoutes);
+app.use("/api/departments", departmentRoutes);
+app.use("/api/report-statuses", reportStatusRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/", (req, res) => {
     res.json({

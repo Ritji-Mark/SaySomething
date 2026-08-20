@@ -17,9 +17,7 @@ export default function Notifications() {
     listNotifications()
       .then((data) => setNotifications(data.notifications || []))
       .catch((err) =>
-        setError(
-          err.response?.data?.message || "Failed to load notifications."
-        )
+        setError(err.response?.data?.message || "Failed to load notifications.")
       )
       .finally(() => setLoading(false));
   };
@@ -53,27 +51,27 @@ export default function Notifications() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Notifications</h1>
+        <h1 className="text-2xl font-bold text-white">Notifications</h1>
         {hasUnread && (
           <button
             onClick={handleMarkAll}
-            className="rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
+            className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white transition hover:bg-white/10"
           >
             Mark all as read
           </button>
         )}
       </div>
 
-      {loading && <p className="text-slate-500">Loading…</p>}
+      {loading && <p className="text-mint">Loading…</p>}
 
       {error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-md bg-red-500/15 px-4 py-3 text-sm text-red-200 ring-1 ring-red-400/20">
           {error}
         </div>
       )}
 
       {!loading && !error && notifications.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-600">
+        <div className="rounded-xl border border-dashed border-forest-line p-10 text-center text-mint">
           You have no notifications.
         </div>
       )}
@@ -83,27 +81,27 @@ export default function Notifications() {
           {notifications.map((n) => (
             <li
               key={n.id}
-              className={`rounded-xl border p-4 shadow-sm ${
+              className={`rounded-xl border p-4 ${
                 n.is_read
-                  ? "border-slate-200 bg-white"
-                  : "border-indigo-200 bg-indigo-50"
+                  ? "border-forest-line bg-forest-surface"
+                  : "border-mint/40 bg-white/5"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
                     {!n.is_read && (
-                      <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                      <span className="h-2 w-2 rounded-full bg-mint" />
                     )}
-                    <h2 className="font-semibold text-slate-900">{n.title}</h2>
+                    <h2 className="font-semibold text-white">{n.title}</h2>
                   </div>
-                  <p className="mt-1 text-sm text-slate-600">{n.message}</p>
-                  <div className="mt-2 flex items-center gap-3 text-xs text-slate-400">
+                  <p className="mt-1 text-sm text-mint">{n.message}</p>
+                  <div className="mt-2 flex items-center gap-3 text-xs text-white/50">
                     <span>{formatDateTime(n.created_at)}</span>
                     {n.report_id && (
                       <Link
                         to={`/reports/${n.report_id}`}
-                        className="font-medium text-indigo-600 hover:underline"
+                        className="font-medium text-mint hover:text-white hover:underline"
                       >
                         View report
                       </Link>
@@ -113,7 +111,7 @@ export default function Notifications() {
                 {!n.is_read && (
                   <button
                     onClick={() => handleMarkRead(n.id)}
-                    className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-100"
+                    className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-mint hover:bg-white/10 hover:text-white"
                   >
                     Mark read
                   </button>
