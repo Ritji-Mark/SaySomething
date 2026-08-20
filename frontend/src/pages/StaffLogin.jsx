@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { homePathForRole } from "../utils/roles.js";
-import GoogleSignInButton from "../components/GoogleSignInButton.jsx";
+import { homePathForRole, isStaff } from "../utils/roles.js";
 
-export default function Login() {
-  const { login, loginWithGoogle } = useAuth();
+// Dedicated sign-in for Authority / Administrator accounts (reachable at
+// /admin/login). Same credentials endpoint as the citizen login, but without
+// Google or self-registration, which don't apply to staff.
+export default function StaffLogin() {
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -20,7 +22,11 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      const dest = location.state?.from?.pathname || homePathForRole(user.role);
+      // Staff land on the dashboard; a citizen who used this page is sent to
+      // their own home rather than a dead end.
+      const dest =
+        location.state?.from?.pathname ||
+        (isStaff(user.role) ? "/dashboard" : homePathForRole(user.role));
       navigate(dest, { replace: true });
     } catch (err) {
       setError(
@@ -28,19 +34,6 @@ export default function Login() {
       );
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogle = async (credential) => {
-    setError("");
-    try {
-      const user = await loginWithGoogle(credential);
-      const dest = location.state?.from?.pathname || homePathForRole(user.role);
-      navigate(dest, { replace: true });
-    } catch (err) {
-      setError(
-        err.response?.data?.message || "Google sign-in failed. Please try again."
-      );
     }
   };
 
@@ -54,16 +47,14 @@ export default function Login() {
         <div className="mb-6 flex flex-col items-center text-center">
           <img src="/logo.png" alt="SaySomething" className="mb-3 h-14 w-14" />
           <h1 className="text-2xl font-bold text-white">SaySomething</h1>
-          <p className="mt-1 text-sm text-mint">
-            Report civic issues and track their progress.
-          </p>
+          <p className="mt-1 text-sm text-mint">Staff &amp; administrator portal.</p>
         </div>
 
         <form
           onSubmit={handleSubmit}
           className="space-y-4 rounded-xl border border-forest-line bg-forest-surface p-6 shadow-lg shadow-black/20"
         >
-          <h2 className="text-lg font-semibold text-white">Sign in</h2>
+          <h2 className="text-lg font-semibold text-white">Staff sign in</h2>
 
           {error && (
             <div className="rounded-md bg-red-500/15 px-3 py-2 text-sm text-red-200 ring-1 ring-red-400/20">
@@ -113,27 +104,17 @@ export default function Login() {
             {loading ? "Signing in…" : "Sign in"}
           </button>
 
-          <div className="flex items-center gap-3">
-            <span className="h-px flex-1 bg-forest-line" />
-            <span className="text-xs text-mint">or</span>
-            <span className="h-px flex-1 bg-forest-line" />
-          </div>
-
-          <GoogleSignInButton onCredential={handleGoogle} text="signin_with" />
-
           <p className="text-center text-sm text-mint">
-            Don&apos;t have an account?{" "}
-            <Link to="/register" className="font-medium text-white hover:underline">
-              Register
-            </Link>
-          </p>
-
-          <p className="text-center text-xs text-white/40">
-            <Link to="/admin/login" className="hover:text-mint hover:underline">
-              Staff sign in
+            Are you a resident?{" "}
+            <Link to="/login" className="font-medium text-white hover:underline">
+              Sign in here
             </Link>
           </p>
         </form>
+
+        <p className="mt-4 text-center text-xs text-white/40">
+          Staff accounts are created by an administrator.
+        </p>
       </div>
     </div>
   );
