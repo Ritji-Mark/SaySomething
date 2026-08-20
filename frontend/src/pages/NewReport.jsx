@@ -35,10 +35,21 @@ export default function NewReport() {
 
   const useMyLocation = () => {
     setGeoError("");
+
     if (!navigator.geolocation) {
-      setGeoError("Geolocation is not supported by your browser.");
+      setGeoError("Geolocation isn't supported by your browser.");
       return;
     }
+    // Geolocation only works over HTTPS (or localhost). On a plain-HTTP page —
+    // e.g. opening the dev server via a LAN IP — the browser blocks it, which
+    // otherwise surfaces as a confusing generic "unavailable" failure.
+    if (!window.isSecureContext) {
+      setGeoError(
+        "Location needs a secure (HTTPS) connection. Open the site over HTTPS and try again."
+      );
+      return;
+    }
+
     setGeoLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -47,10 +58,30 @@ export default function NewReport() {
         setGeoLoading(false);
       },
       (err) => {
-        setGeoError(err.message || "Unable to retrieve your location.");
+        // Map the browser's error code to something actionable.
+        let message;
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            message =
+              "Location permission was denied. Allow location access for this site in your browser settings, then try again.";
+            break;
+          case err.POSITION_UNAVAILABLE:
+            message =
+              "Your location is currently unavailable. Check that your device's location services are turned on, then try again.";
+            break;
+          case err.TIMEOUT:
+            message = "Getting your location took too long. Please try again.";
+            break;
+          default:
+            message = "Unable to retrieve your location. Please try again.";
+        }
+        setGeoError(message);
         setGeoLoading(false);
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      // enableHighAccuracy is intentionally off: on desktops without GPS it
+      // often times out or reports the position as unavailable, whereas coarse
+      // (WiFi / IP) location resolves quickly. maximumAge accepts a recent fix.
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
     );
   };
 
