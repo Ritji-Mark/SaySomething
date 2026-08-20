@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { homePathForRole } from "../utils/roles.js";
+import GoogleSignInButton from "../components/GoogleSignInButton.jsx";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -27,6 +28,19 @@ export default function Login() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogle = async (credential) => {
+    setError("");
+    try {
+      const user = await loginWithGoogle(credential);
+      const dest = location.state?.from?.pathname || homePathForRole(user.role);
+      navigate(dest, { replace: true });
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Google sign-in failed. Please try again."
+      );
     }
   };
 
@@ -70,7 +84,17 @@ export default function Login() {
           </div>
 
           <div>
-            <label className={labelClass}>Password</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="block text-sm font-medium text-mint">
+                Password
+              </label>
+              <Link
+                to="/forgot-password"
+                className="text-xs text-mint hover:text-white hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               required
@@ -88,6 +112,14 @@ export default function Login() {
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>
+
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-forest-line" />
+            <span className="text-xs text-mint">or</span>
+            <span className="h-px flex-1 bg-forest-line" />
+          </div>
+
+          <GoogleSignInButton onCredential={handleGoogle} text="signin_with" />
 
           <p className="text-center text-sm text-mint">
             Don&apos;t have an account?{" "}

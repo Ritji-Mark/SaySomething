@@ -72,7 +72,9 @@ CREATE TABLE IF NOT EXISTS users (
     full_name     VARCHAR(150) NOT NULL,
     email         VARCHAR(255) NOT NULL UNIQUE,
     phone         VARCHAR(30),
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,                 -- nullable: Google-only accounts have no password
+    google_id     VARCHAR(255) UNIQUE,  -- Google OAuth subject (sub); null for password accounts
+    avatar_url    TEXT,                 -- profile picture from Google, when available
     role_id       INTEGER NOT NULL,
     authority_id  INTEGER,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -172,6 +174,18 @@ CREATE TABLE IF NOT EXISTS notifications (
         FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE CASCADE
 );
 
+-- Password-reset tokens (only the SHA-256 hash is stored; 1-hour, single-use).
+CREATE TABLE IF NOT EXISTS password_resets (
+    id         SERIAL PRIMARY KEY,
+    user_id    INTEGER NOT NULL,
+    token_hash TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used_at    TIMESTAMPTZ,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_password_reset_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- ============================================================================
 -- Indexes  (recommended additions — NOT present in the current live DB)
 -- ----------------------------------------------------------------------------
@@ -196,6 +210,10 @@ CREATE INDEX IF NOT EXISTS idx_comments_report_id       ON comments (report_id);
 CREATE INDEX IF NOT EXISTS idx_evidence_report_id       ON evidence (report_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id    ON notifications (user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications (user_id) WHERE is_read = FALSE;
+
+-- Password resets
+CREATE INDEX IF NOT EXISTS idx_password_resets_token   ON password_resets (token_hash);
+CREATE INDEX IF NOT EXISTS idx_password_resets_user_id ON password_resets (user_id);
 
 -- Users & departments
 CREATE INDEX IF NOT EXISTS idx_users_role_id           ON users (role_id);

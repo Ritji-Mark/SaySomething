@@ -5,6 +5,8 @@ import { useAuth } from "./context/AuthContext.jsx";
 import { homePathForRole, ROLES, STAFF_ROLES } from "./utils/roles.js";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
 import ReportsList from "./pages/ReportsList.jsx";
 import NewReport from "./pages/NewReport.jsx";
 import ReportDetail from "./pages/ReportDetail.jsx";
@@ -25,6 +27,8 @@ export default function App() {
       {/* Public */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Authenticated app shell */}
       <Route

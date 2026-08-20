@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { homePathForRole } from "../utils/roles.js";
+import GoogleSignInButton from "../components/GoogleSignInButton.jsx";
 
 export default function Register() {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -37,6 +38,18 @@ export default function Register() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogle = async (credential) => {
+    setError("");
+    try {
+      const user = await loginWithGoogle(credential);
+      navigate(homePathForRole(user.role), { replace: true });
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Google sign-in failed. Please try again."
+      );
     }
   };
 
@@ -124,6 +137,14 @@ export default function Register() {
           >
             {loading ? "Creating account…" : "Create account"}
           </button>
+
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-forest-line" />
+            <span className="text-xs text-mint">or</span>
+            <span className="h-px flex-1 bg-forest-line" />
+          </div>
+
+          <GoogleSignInButton onCredential={handleGoogle} text="signup_with" />
 
           <p className="text-center text-sm text-mint">
             Already have an account?{" "}

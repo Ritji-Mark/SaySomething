@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback } from "react";
-import { loginRequest, registerRequest } from "../api/auth.js";
+import { loginRequest, registerRequest, googleSignIn } from "../api/auth.js";
 
 const AuthContext = createContext(null);
 
@@ -16,6 +16,16 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const data = await loginRequest({ email, password });
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    setToken(data.token);
+    setUser(data.user);
+    return data.user;
+  }, []);
+
+  // Sign in with a Google ID token (credential from the GIS button).
+  const loginWithGoogle = useCallback(async (credential) => {
+    const data = await googleSignIn(credential);
     localStorage.setItem("token", data.token);
     localStorage.setItem("user", JSON.stringify(data.user));
     setToken(data.token);
@@ -44,6 +54,7 @@ export function AuthProvider({ children }) {
     user,
     isAuthenticated: !!token,
     login,
+    loginWithGoogle,
     register,
     logout,
   };
