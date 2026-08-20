@@ -15,6 +15,7 @@ import { API_ORIGIN } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { ROLES, homePathForRole } from "../utils/roles.js";
 import StatusBadge from "../components/StatusBadge.jsx";
+import ReportMap from "../components/ReportMap.jsx";
 import { formatDateTime } from "../utils/format.js";
 
 export default function ReportDetail() {
@@ -317,6 +318,18 @@ export default function ReportDetail() {
           )}
         </dl>
       </div>
+
+      {/* Location map — visible to staff only */}
+      {isStaff && report.latitude != null && report.longitude != null && (
+        <div className="rounded-xl border border-forest-line bg-forest-surface p-6">
+          <h2 className="mb-4 text-lg font-semibold text-white">Location</h2>
+          <ReportMap latitude={report.latitude} longitude={report.longitude} />
+          <p className="mt-3 font-mono text-xs text-mint">
+            {Number(report.latitude).toFixed(6)},{" "}
+            {Number(report.longitude).toFixed(6)}
+          </p>
+        </div>
+      )}
 
       {/* Staff / Admin actions */}
       {isStaff && (

@@ -4,6 +4,11 @@ const pool = require("../config/database");
 const authenticateToken = require("../middleware/auth");
 const authorizeRoles = require("../middleware/roles");
 const { getAccessibleReport } = require("../utils/reportAccess");
+const { sendMail } = require("../services/mailer");
+const {
+    statusChangedEmail,
+    reportAssignedEmail,
+} = require("../services/emailTemplates");
 
 const router = express.Router();
 
@@ -27,7 +32,9 @@ const REPORT_SELECT = `
         d.name AS department,
         r.created_at,
         r.updated_at,
-        r.resolved_at
+        r.resolved_at,
+        ST_Y(r.location::geometry) AS latitude,
+        ST_X(r.location::geometry) AS longitude
     FROM reports r
     LEFT JOIN report_status rs ON rs.id = r.status_id
     LEFT JOIN categories c ON c.id = r.category_id
@@ -267,9 +274,13 @@ router.patch(
 
             await client.query("BEGIN");
 
-            // Check report (and grab the reporter for notification)
+            // Check report (and grab the reporter for the notification + email)
             const reportResult = await client.query(
-                "SELECT id, status_id, user_id, report_number FROM reports WHERE id = $1",
+                `SELECT r.id, r.status_id, r.user_id, r.report_number,
+                        u.email AS reporter_email, u.full_name AS reporter_name
+                 FROM reports r
+                 JOIN users u ON u.id = r.user_id
+                 WHERE r.id = $1`,
                 [id]
             );
 
@@ -342,6 +353,18 @@ router.patch(
 
             await client.query("COMMIT");
 
+            // Email the reporter (outside the transaction; a mail failure must
+            // never roll back the status change). sendMail swallows its errors.
+            if (report.reporter_email) {
+                const mail = statusChangedEmail({
+                    name: report.reporter_name,
+                    reportNumber: report.report_number,
+                    statusName,
+                    reportId: id
+                });
+                sendMail({ to: report.reporter_email, ...mail });
+            }
+
             res.json({
                 success: true,
                 message: "Report status updated successfully",
@@ -384,9 +407,13 @@ router.patch(
 
             await client.query("BEGIN");
 
-            // Report must exist (grab reporter for notification)
+            // Report must exist (grab reporter for the notification + email)
             const reportResult = await client.query(
-                "SELECT id, user_id, report_number FROM reports WHERE id = $1",
+                `SELECT r.id, r.user_id, r.report_number,
+                        u.email AS reporter_email, u.full_name AS reporter_name
+                 FROM reports r
+                 JOIN users u ON u.id = r.user_id
+                 WHERE r.id = $1`,
                 [id]
             );
             if (reportResult.rows.length === 0) {
@@ -476,6 +503,17 @@ router.patch(
             );
 
             await client.query("COMMIT");
+
+            // Email the reporter (outside the transaction). sendMail swallows its errors.
+            if (report.reporter_email) {
+                const mail = reportAssignedEmail({
+                    name: report.reporter_name,
+                    reportNumber: report.report_number,
+                    authorityName,
+                    reportId: id
+                });
+                sendMail({ to: report.reporter_email, ...mail });
+            }
 
             res.json({
                 success: true,

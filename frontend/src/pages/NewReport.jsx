@@ -67,7 +67,7 @@ export default function NewReport() {
     }
     if (Number.isNaN(lat) || Number.isNaN(lng)) {
       setError(
-        "A location is required. Use “Use my location” or enter coordinates."
+        "A location is required. Tap “Use my location” to attach your current position."
       );
       return;
     }
@@ -186,36 +186,22 @@ export default function NewReport() {
 
           {geoError && <p className="mb-3 text-sm text-red-300">{geoError}</p>}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-mint">
-                Latitude
-              </label>
-              <input
-                type="number"
-                step="any"
-                required
-                value={latitude}
-                onChange={(e) => setLatitude(e.target.value)}
-                className={inputClass}
-                placeholder="Latitude"
-              />
+          {latitude && longitude ? (
+            <div className="flex items-center gap-2 rounded-md border border-mint/30 bg-mint/10 px-3 py-2 text-sm text-white">
+              <span aria-hidden="true">📍</span>
+              <span>
+                Location captured
+                <span className="ml-1 font-mono text-xs text-mint">
+                  ({latitude}, {longitude})
+                </span>
+              </span>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-mint">
-                Longitude
-              </label>
-              <input
-                type="number"
-                step="any"
-                required
-                value={longitude}
-                onChange={(e) => setLongitude(e.target.value)}
-                className={inputClass}
-                placeholder="Longitude"
-              />
-            </div>
-          </div>
+          ) : (
+            <p className="text-sm text-white/60">
+              Tap <span className="font-medium text-white">Use my location</span>{" "}
+              to attach your current position — required to submit a report.
+            </p>
+          )}
         </div>
 
         <button
