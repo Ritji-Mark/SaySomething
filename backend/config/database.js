@@ -8,7 +8,10 @@ const pool = new Pool({
     port: process.env.DB_PORT,
     database: process.env.DB_NAME,
     user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD
+    password: process.env.DB_PASSWORD,
+    // Managed Postgres (e.g. Supabase) requires SSL. Enable it in production
+    // with DB_SSL=true; left off locally so a plain local Postgres still works.
+    ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false
 });
 
 pool.on("connect", () => {

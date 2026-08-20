@@ -9,8 +9,10 @@ const { getAccessibleReport } = require("../utils/reportAccess");
 
 const router = express.Router({ mergeParams: true });
 
-// Ensure the uploads directory exists (backend/uploads)
-const UPLOAD_DIR = path.join(__dirname, "..", "uploads");
+// Ensure the uploads directory exists. Defaults to backend/uploads for local
+// dev; in production set UPLOAD_DIR to a persistent path (e.g. a mounted disk),
+// since a host's default filesystem is typically wiped on each deploy/restart.
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, "..", "uploads");
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const ALLOWED_TYPES = new Set([
