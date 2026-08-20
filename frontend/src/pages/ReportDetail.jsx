@@ -470,11 +470,9 @@ export default function ReportDetail() {
                     </span>
                   </div>
                   {h.note && <p className="mt-1 text-sm text-white/90">{h.note}</p>}
-                  {h.changed_by_name && (
-                    <p className="mt-0.5 text-xs text-mint">
-                      by {h.changed_by_name}
-                    </p>
-                  )}
+                  <p className="mt-0.5 text-xs text-mint">
+                    by {h.changed_by_name || "System"}
+                  </p>
                 </div>
               </li>
             ))}

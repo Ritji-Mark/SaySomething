@@ -4,6 +4,7 @@ const pool = require("../config/database");
 const authenticateToken = require("../middleware/auth");
 const authorizeRoles = require("../middleware/roles");
 const { getAccessibleReport } = require("../utils/reportAccess");
+const { validateDepartmentBelongsToAuthority } = require("../utils/orgValidation");
 const { sendMail } = require("../services/mailer");
 const {
     statusChangedEmail,
@@ -171,9 +172,13 @@ router.post("/", authenticateToken, async (req, res) => {
             });
         }
 
-        // 3. Check that the category exists
+        // 3. Look up the category and its routing defaults (if any)
         const categoryResult = await pool.query(
-            "SELECT id FROM categories WHERE id = $1",
+            `SELECT c.id, c.default_authority_id, c.default_department_id,
+                    a.name AS default_authority
+             FROM categories c
+             LEFT JOIN authorities a ON a.id = c.default_authority_id
+             WHERE c.id = $1`,
             [category_id]
         );
 
@@ -184,64 +189,196 @@ router.post("/", authenticateToken, async (req, res) => {
             });
         }
 
-        // 4. Get the Submitted status
-        const statusResult = await pool.query(
-            "SELECT id FROM report_status WHERE name = 'Submitted'"
-        );
+        const category = categoryResult.rows[0];
 
-        if (statusResult.rows.length === 0) {
-            return res.status(500).json({
-                success: false,
-                message: "Submitted report status is not configured"
-            });
-        }
-
-        const status_id = statusResult.rows[0].id;
-
-        // 5. Generate a unique report number
+        // 4. Generate a unique report number (shared by both paths)
         const randomCode = crypto.randomBytes(4).toString("hex").toUpperCase();
         const report_number = `SS-${new Date().getFullYear()}-${randomCode}`;
 
-        // 6. Insert the report
-        const result = await pool.query(
-            `
-            INSERT INTO reports (
-                report_number,
-                user_id,
-                category_id,
-                title,
-                description,
-                location,
-                address,
-                status_id
-            )
-            VALUES (
-                $1, $2, $3, $4, $5,
-                ST_SetSRID(ST_MakePoint($6, $7), 4326)::geography,
-                $8, $9
-            )
-            RETURNING
-                id, report_number, user_id, category_id,
-                title, description, address, status_id, created_at
-            `,
-            [
-                report_number,
-                user_id,
-                category_id,
-                title,
-                description,
-                longitude,
-                latitude,
-                address || null,
-                status_id
-            ]
-        );
+        // ── Unmapped category ────────────────────────────────────────────────
+        // No routing configured: original behaviour — the report is created
+        // "Submitted" and unassigned, landing in the admin queue.
+        if (!category.default_authority_id) {
+            const statusResult = await pool.query(
+                "SELECT id FROM report_status WHERE name = 'Submitted'"
+            );
 
-        res.status(201).json({
-            success: true,
-            message: "Report submitted successfully",
-            report: result.rows[0]
-        });
+            if (statusResult.rows.length === 0) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Submitted report status is not configured"
+                });
+            }
+
+            const status_id = statusResult.rows[0].id;
+
+            const result = await pool.query(
+                `
+                INSERT INTO reports (
+                    report_number,
+                    user_id,
+                    category_id,
+                    title,
+                    description,
+                    location,
+                    address,
+                    status_id
+                )
+                VALUES (
+                    $1, $2, $3, $4, $5,
+                    ST_SetSRID(ST_MakePoint($6, $7), 4326)::geography,
+                    $8, $9
+                )
+                RETURNING
+                    id, report_number, user_id, category_id,
+                    title, description, address, status_id, created_at
+                `,
+                [
+                    report_number,
+                    user_id,
+                    category_id,
+                    title,
+                    description,
+                    longitude,
+                    latitude,
+                    address || null,
+                    status_id
+                ]
+            );
+
+            return res.status(201).json({
+                success: true,
+                message: "Report submitted successfully",
+                report: result.rows[0]
+            });
+        }
+
+        // ── Mapped category → auto-assign ────────────────────────────────────
+        // The category routes to an authority (+ optional department): create
+        // the report already "Assigned", record history (system actor) and
+        // notify the reporter — all atomically.
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+
+            const statusResult = await client.query(
+                "SELECT id FROM report_status WHERE name = 'Assigned'"
+            );
+            if (statusResult.rows.length === 0) {
+                await client.query("ROLLBACK");
+                return res.status(500).json({
+                    success: false,
+                    message: "Assigned report status is not configured"
+                });
+            }
+            const assignedStatusId = statusResult.rows[0].id;
+
+            // Reporter details for the notification + email (not in the token)
+            const reporterResult = await client.query(
+                "SELECT email, full_name FROM users WHERE id = $1",
+                [user_id]
+            );
+            const reporter = reporterResult.rows[0] || {};
+
+            const authorityName = category.default_authority;
+
+            const result = await client.query(
+                `
+                INSERT INTO reports (
+                    report_number,
+                    user_id,
+                    category_id,
+                    title,
+                    description,
+                    location,
+                    address,
+                    status_id,
+                    authority_id,
+                    department_id
+                )
+                VALUES (
+                    $1, $2, $3, $4, $5,
+                    ST_SetSRID(ST_MakePoint($6, $7), 4326)::geography,
+                    $8, $9, $10, $11
+                )
+                RETURNING
+                    id, report_number, user_id, category_id,
+                    title, description, address, status_id,
+                    authority_id, department_id, created_at
+                `,
+                [
+                    report_number,
+                    user_id,
+                    category_id,
+                    title,
+                    description,
+                    longitude,
+                    latitude,
+                    address || null,
+                    assignedStatusId,
+                    category.default_authority_id,
+                    category.default_department_id || null
+                ]
+            );
+
+            const report = result.rows[0];
+
+            // Status history with a NULL actor = automated (category routing)
+            await client.query(
+                `
+                INSERT INTO status_history (report_id, status_id, changed_by, note)
+                VALUES ($1, $2, NULL, $3)
+                `,
+                [
+                    report.id,
+                    assignedStatusId,
+                    `Auto-assigned to ${authorityName} based on category routing`
+                ]
+            );
+
+            // Notify the reporter
+            await client.query(
+                `
+                INSERT INTO notifications (user_id, report_id, title, message)
+                VALUES ($1, $2, $3, $4)
+                `,
+                [
+                    user_id,
+                    report.id,
+                    "Report assigned",
+                    `Your report ${report.report_number} has been assigned to ${authorityName}.`
+                ]
+            );
+
+            await client.query("COMMIT");
+
+            // Email the reporter outside the transaction (sendMail never throws)
+            if (reporter.email) {
+                const mail = reportAssignedEmail({
+                    name: reporter.full_name,
+                    reportNumber: report.report_number,
+                    authorityName,
+                    reportId: report.id
+                });
+                sendMail({ to: reporter.email, ...mail });
+            }
+
+            return res.status(201).json({
+                success: true,
+                message: "Report submitted successfully",
+                report
+            });
+
+        } catch (txErr) {
+            await client.query("ROLLBACK");
+            console.error("Error creating auto-assigned report:", txErr);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to submit report"
+            });
+        } finally {
+            client.release();
+        }
 
     } catch (error) {
         console.error("Error creating report:", error);
@@ -435,19 +572,16 @@ router.patch(
 
             // If a department is given, it must exist AND belong to the authority
             if (department_id !== undefined && department_id !== null) {
-                const deptResult = await client.query(
-                    "SELECT id, authority_id FROM departments WHERE id = $1",
-                    [department_id]
+                const check = await validateDepartmentBelongsToAuthority(
+                    client,
+                    department_id,
+                    authority_id
                 );
-                if (deptResult.rows.length === 0) {
+                if (!check.ok) {
                     await client.query("ROLLBACK");
-                    return res.status(404).json({ success: false, message: "Department not found" });
-                }
-                if (Number(deptResult.rows[0].authority_id) !== Number(authority_id)) {
-                    await client.query("ROLLBACK");
-                    return res.status(400).json({
+                    return res.status(check.status).json({
                         success: false,
-                        message: "Department does not belong to the specified authority"
+                        message: check.message
                     });
                 }
             }

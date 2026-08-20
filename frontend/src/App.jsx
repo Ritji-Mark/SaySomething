@@ -14,6 +14,8 @@ import ReportDetail from "./pages/ReportDetail.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import StaffDashboard from "./pages/StaffDashboard.jsx";
 import AdminUsers from "./pages/AdminUsers.jsx";
+import AdminAuthorities from "./pages/AdminAuthorities.jsx";
+import AdminRouting from "./pages/AdminRouting.jsx";
 
 // Sends visitors to the right landing page for their role (or to login).
 function HomeRedirect() {
@@ -77,6 +79,22 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={[ROLES.ADMINISTRATOR]}>
               <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/authorities"
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMINISTRATOR]}>
+              <AdminAuthorities />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/routing"
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMINISTRATOR]}>
+              <AdminRouting />
             </ProtectedRoute>
           }
         />

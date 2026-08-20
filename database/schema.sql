@@ -26,12 +26,9 @@ CREATE TABLE IF NOT EXISTS roles (
     name VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS categories (
-    id          SERIAL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL UNIQUE,
-    description TEXT,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- NOTE: `categories` is defined lower down (after `departments`) because it now
+-- carries foreign keys to authorities/departments for category → authority
+-- routing, and those tables must exist first.
 
 CREATE TABLE IF NOT EXISTS report_status (
     id          SERIAL PRIMARY KEY,
@@ -61,6 +58,23 @@ CREATE TABLE IF NOT EXISTS departments (
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_department_authority
         FOREIGN KEY (authority_id) REFERENCES authorities(id) ON DELETE CASCADE
+);
+
+-- Report categories. `default_authority_id` / `default_department_id` implement
+-- category → authority routing: when set, new reports in this category are
+-- auto-assigned to that authority (+ optional department). Nullable; cleared
+-- automatically if the referenced org is removed.
+CREATE TABLE IF NOT EXISTS categories (
+    id                    SERIAL PRIMARY KEY,
+    name                  VARCHAR(100) NOT NULL UNIQUE,
+    description           TEXT,
+    default_authority_id  INTEGER,
+    default_department_id INTEGER,
+    created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_category_default_authority
+        FOREIGN KEY (default_authority_id) REFERENCES authorities(id) ON DELETE SET NULL,
+    CONSTRAINT fk_category_default_department
+        FOREIGN KEY (default_department_id) REFERENCES departments(id) ON DELETE SET NULL
 );
 
 -- ----------------------------------------------------------------------------
@@ -124,7 +138,7 @@ CREATE TABLE IF NOT EXISTS status_history (
     id         SERIAL PRIMARY KEY,
     report_id  INTEGER NOT NULL,
     status_id  INTEGER NOT NULL,
-    changed_by INTEGER NOT NULL,
+    changed_by INTEGER,  -- nullable: NULL = system/automated action (e.g. category auto-routing)
     note       TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_history_report

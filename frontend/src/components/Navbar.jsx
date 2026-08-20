@@ -57,6 +57,8 @@ export default function Navbar() {
   }
   if (role === ROLES.ADMINISTRATOR) {
     links.push({ to: "/admin/users", label: "Users" });
+    links.push({ to: "/admin/authorities", label: "Authorities" });
+    links.push({ to: "/admin/routing", label: "Routing" });
   }
 
   const notificationsLink = (
