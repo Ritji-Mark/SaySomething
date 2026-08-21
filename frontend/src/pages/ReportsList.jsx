@@ -31,8 +31,8 @@ export default function ReportsList() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-white">My Reports</h1>
           <p className="text-sm text-mint">
             Issues you have reported and their current status.
@@ -40,7 +40,7 @@ export default function ReportsList() {
         </div>
         <Link
           to="/reports/new"
-          className="rounded-md bg-mint px-4 py-2 text-sm font-semibold text-forest transition hover:bg-white"
+          className="shrink-0 whitespace-nowrap rounded-md bg-mint px-4 py-2 text-sm font-semibold text-forest transition hover:bg-white"
         >
           + New Report
         </Link>

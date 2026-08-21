@@ -261,18 +261,20 @@ export default function ReportDetail() {
       {/* Report header */}
       <div className="rounded-xl border border-forest-line bg-forest-surface p-6">
         <div className="mb-3 flex items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <span className="font-mono text-xs text-mint">
               {report.report_number}
             </span>
             <h1 className="text-2xl font-bold text-white">{report.title}</h1>
           </div>
-          <StatusBadge status={report.status} />
+          <div className="shrink-0">
+            <StatusBadge status={report.status} />
+          </div>
         </div>
 
         <p className="whitespace-pre-line text-white/90">{report.description}</p>
 
-        <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-forest-line pt-4 text-sm sm:grid-cols-3">
+        <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-forest-line pt-4 text-sm sm:grid-cols-3 [&>div]:min-w-0">
           <div>
             <dt className="text-mint">Category</dt>
             <dd className="font-medium text-white">{report.category || "—"}</dd>
@@ -462,8 +464,8 @@ export default function ReportDetail() {
                 <div className="mt-1 flex flex-col items-center">
                   <span className="h-2.5 w-2.5 rounded-full bg-mint" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge status={h.status} />
                     <span className="text-xs text-white/50">
                       {formatDateTime(h.created_at)}
@@ -526,7 +528,7 @@ export default function ReportDetail() {
               type="file"
               accept="image/*,application/pdf"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="text-sm text-mint file:mr-3 file:rounded-md file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-white/20"
+              className="max-w-full text-sm text-mint file:mr-3 file:rounded-md file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-white/20"
             />
             <button type="submit" disabled={uploading} className={primaryBtn}>
               {uploading ? "Uploading…" : "Upload"}
@@ -556,7 +558,7 @@ export default function ReportDetail() {
                 key={c.id}
                 className="border-b border-forest-line pb-3 last:border-0"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium text-white">
                     {c.author || "User"}
                   </span>

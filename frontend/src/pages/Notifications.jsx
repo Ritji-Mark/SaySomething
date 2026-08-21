@@ -50,12 +50,12 @@ export default function Notifications() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-white">Notifications</h1>
         {hasUnread && (
           <button
             onClick={handleMarkAll}
-            className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+            className="shrink-0 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white transition hover:bg-white/10"
           >
             Mark all as read
           </button>
@@ -88,7 +88,7 @@ export default function Notifications() {
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     {!n.is_read && (
                       <span className="h-2 w-2 rounded-full bg-mint" />

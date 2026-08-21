@@ -130,9 +130,9 @@ export default function NewReport() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-white">Report an Issue</h1>
-        <Link to="/reports" className="text-sm text-mint hover:text-white hover:underline">
+        <Link to="/reports" className="shrink-0 text-sm text-mint hover:text-white hover:underline">
           ← Back to my reports
         </Link>
       </div>

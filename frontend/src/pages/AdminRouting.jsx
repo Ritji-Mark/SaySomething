@@ -157,7 +157,7 @@ export default function AdminRouting() {
 
       {!loading && !error && (
         <div className="overflow-x-auto rounded-xl border border-forest-line">
-          <table className="min-w-full text-sm">
+          <table className="w-full min-w-180 text-sm">
             <thead className="bg-white/5 text-left text-xs uppercase tracking-wide text-mint">
               <tr>
                 <th className="px-4 py-3 font-semibold">Category</th>

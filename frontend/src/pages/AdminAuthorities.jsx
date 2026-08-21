@@ -355,7 +355,7 @@ export default function AdminAuthorities() {
                     className="rounded-xl border border-forest-line bg-forest-surface p-5"
                   >
                     <div className="flex items-start justify-between gap-4">
-                      <div>
+                      <div className="min-w-0">
                         <h3 className="font-semibold text-white">{a.name}</h3>
                         {a.description && (
                           <p className="mt-1 text-sm text-white/70">

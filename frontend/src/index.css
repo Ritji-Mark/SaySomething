@@ -25,11 +25,22 @@ body,
   min-height: 100vh;
 }
 
+/* Safety net: never let the page itself scroll sideways on small screens.
+   Intentional inner scrollers (data tables, the map) manage their own overflow. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background-color: var(--color-forest);
   color: #ffffff;
   font-family: var(--font-sans);
+  /* Break long unbroken strings (URLs, emails, coordinates) instead of
+     forcing the layout wider than the viewport. Inherited by all elements. */
+  overflow-wrap: break-word;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
